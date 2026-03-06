@@ -1,0 +1,66 @@
+| Product Extraction – Schema & Category Field Rules |
+
+| Overview |
+This document defines the rules governing the JSON output returned by the AI extraction model for the Seller Admin Panel – Product Box Image Extraction feature.
+
+| File |
+product_schema.json --- JSON Schema (draft-07) for validation
+categories.json --- Category list in array format for prompting
+
+| Field Rules |
+(1) name — string | null
+
+-Extract the main product title exactly as printed on the packaging.
+-Do not paraphrase or translate.
+-Max length: 255 characters.
+-Set to null if not visible on packaging.
+
+(2) brand — string | null
+
+-Extract the brand name as printed. Do not guess or infer.
+-Max length: 255 characters.
+-Set to null if not visible.
+
+(3) category — string | null
+
+-Must be an exact match from categories.json.
+-Never return a value outside the allowed list.
+
+(4) description — string | null
+
+-Summarize visible product specifications.
+-Based only on what is visible on the packaging — do not add external knowledge.
+-Max length: 1000 characters.
+-Set to null if insufficient packaging information exists.
+
+(5) manufacturing_country — string | null
+
+-Max length: 100 characters.
+-Set to null if not found on packaging.
+
+(6) estimated_wholesale_price_azn — float | null 
+
+-Represents the estimated wholesale price in AZN.
+-Must be a positive number. Set to null if estimation is not possible.
+
+(7) estimated_retail_price_azn — float | null
+
+-Represents the estimated retail price in AZN.
+-Typically computed as: retail = wholesale × markup.
+-Must be a positive number. Set to null if wholesale is also null.
+
+(8) confidence_score — float (always required, never null)
+
+-Reflects the overall extraction confidence for the entire response.
+-Range: 0.0 to 1.0.
+-Always present. This is the only field that cannot be null.
+-Computed from:
+    --Number of non-null fields extracted
+    --Category match success
+    --Presence of manufacturing country
+    --Price estimation source (internal vs. model)
+
+| Strict Rules for All Fields |
+-1- Never hallucinate. If information is not visible on the packaging, return null
+-2- Category must match the allowed list. Unknown categories are rejected by the validation layer and set to null.
+-3- Prices must be positive floats. Negative or zero prices fail validation and are set to null.
